@@ -18,6 +18,11 @@ struct point {
     bool operator <(const point &rhs) const {
         return x < rhs.x;
     }
+    
+    //== operator that checks whether two points are identical.
+    bool operator ==(const point &rhs) const {
+        return ((x == rhs.x) && (y == rhs.y));
+    }
 };
 
 template <class type>
@@ -44,21 +49,25 @@ private:
     PointQuadTreeNode<type> *root;
     
     //Helper functions:
-    void printTreeHelper(PointQuadTreeNode<type> *_root);
+    void printTreeHelper(PointQuadTreeNode<type> *_root) const;
     int comparePoints(point &p1, point &p2);
     void insertHelper(point &p, type &_data, PointQuadTreeNode<type>* &_root);
     point normalizePoint(point dataPoint, point &searchCenter, int &directionCode);
     int regionRelativeToSearchPoint(point &searchPoint, point &normalizedDataPoint, int &radius);
     void setSearchMarks(int &directionCode, int &region, vector<bool> &searchMarks);
     void searchAreaHelper(point &searchCenter, int &radius, map<point, type> &pointFoundToData, PointQuadTreeNode<type>* &_root);
+    void getTreeSizeHelper(int &sum, PointQuadTreeNode<type>* _root) const;
+    type searchPointHelper(PointQuadTreeNode<type>* &_root, point &p);
     
-
 public:
     PointQuadTree(); //Default constructor.
-    void printTree(); //Only works if "cout << data_type;" is defined.
+    void printTree() const; //Only works if "cout << data_type;" is defined.
     void insert(point p, type _data); //Inserts a point combined with data to tree.
     void insert(int xCoordinate, int yCoordinate, type _data); //Inserts a point given the x coordinates, y coordinates.
+    int getTreeSize() const; //Returns tree size.
     map<point, type> searchArea(point &searchCenter, int &radius); //Searches a circular area for data given a center point and radius.
+    type searchPoint(point &p); //Searches a given point.
+    type searchPoint(int xCoordinate, int yCoordinate); //Seaces a point given x, y coordinates.
 };
 
 #include "PointQuadTree.cpp"

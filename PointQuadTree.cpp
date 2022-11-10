@@ -5,8 +5,8 @@
 #include <map>
 #include "PointQuadTree.hpp"
 
-
 using namespace std;
+
 /*
 DIRECTIONS ARE DEFINED AS FOLLOWS:
 North-East: 0, South-East: 1, South-West: 2, North-West: 3
@@ -18,9 +18,12 @@ PointQuadTree<type>::PointQuadTree() {
     root = NULL;
 }
 
+/* PRIVATE
+   ------- */
+
 //Recursive Helper for printTree.
 template<class type>
-void PointQuadTree<type>::printTreeHelper(PointQuadTreeNode<type> *_root) {
+void PointQuadTree<type>::printTreeHelper(PointQuadTreeNode<type> *_root) const {
     if (_root != NULL) {
         cout << _root -> data << endl;
         //Print all subtrees recursively:
@@ -29,13 +32,6 @@ void PointQuadTree<type>::printTreeHelper(PointQuadTreeNode<type> *_root) {
         printTreeHelper(_root -> ne);
         printTreeHelper(_root -> nw);
     }
-}
-
-//Prints all the data in the tree.
-template<class type>
-void PointQuadTree<type>::printTree() {
-    printTreeHelper(root);
-    cout << "\n";
 }
 
 //Returns the direction of p1 relative to p2.
@@ -155,14 +151,6 @@ void PointQuadTree<type>::searchAreaHelper(point &searchCenter, int &radius, map
     if(searchMarks[3]) searchAreaHelper(searchCenter, radius, pointFoundToData, _root -> nw);
 }
 
-//Public function to search an area and returns a map(point -> type) consisting the points as keys data found as values in the tree.
-template<class type>
-map<point, type> PointQuadTree<type>::searchArea(point &searchCenter, int &radius) {
-    map<point, type> pointFoundToData;
-    searchAreaHelper(searchCenter, radius, pointFoundToData, root);
-    return pointFoundToData;
-}
-
 //Inserts point combined with data into the tree recursively.
 template<class type>
 void PointQuadTree<type>::insertHelper(point &p, type &_data, PointQuadTreeNode<type>* & _root) {
@@ -178,6 +166,59 @@ void PointQuadTree<type>::insertHelper(point &p, type &_data, PointQuadTreeNode<
     }
 }
 
+//Helper function for getTreeSize.
+template<class type>
+void PointQuadTree<type>::getTreeSizeHelper(int &sum, PointQuadTreeNode<type>* _root) const {
+    if (_root != NULL) {
+        sum++;
+        getTreeSizeHelper(sum, _root -> ne);
+        getTreeSizeHelper(sum, _root -> se);
+        getTreeSizeHelper(sum, _root -> sw);
+        getTreeSizeHelper(sum, _root -> nw);
+    }
+}
+
+//Helper function for searchPoint.
+template<class type>
+type PointQuadTree<type>::searchPointHelper(PointQuadTreeNode<type> *&_root, point &p) {
+    try {
+        if (_root != NULL) {
+            if (_root -> coordinates == p) {
+                return _root -> data;
+            }
+            
+            int nextSearchDirection = comparePoints(p, _root -> coordinates);
+            if (nextSearchDirection == 0) {
+                return searchPointHelper(_root -> ne, p);
+            }
+            else if (nextSearchDirection == 1) {
+                return searchPointHelper(_root -> se, p);
+            }
+            else if (nextSearchDirection == 2) {
+                return searchPointHelper(_root -> sw, p);
+            }
+            else {
+                return searchPointHelper(_root -> nw, p);
+            }
+        }
+        else throw 0;
+    }
+    catch (...) {
+        cout << "Point (" << p.x << ", " << p.y << ") not found in the tree!\n";
+    }
+    return type();
+}
+
+/* PUBLIC
+   ------ */
+
+//Prints all the data in the tree.
+template<class type>
+void PointQuadTree<type>::printTree() const {
+    printTreeHelper(root);
+    cout << "\n";
+}
+
 //Public function to insert point combined with data into tree.
 template<class type>
 void PointQuadTree<type>::insert(point p, type _data) {
@@ -189,4 +230,34 @@ template<class type>
 void PointQuadTree<type>::insert(int xCoordinate, int yCoordinate, type _data) {
     point p = point(xCoordinate, yCoordinate);
     insertHelper(p, _data, root);
+}
+
+//Returns the number of total elements in the tree.
+template<class type>
+int PointQuadTree<type>::getTreeSize() const {
+    int sum = 0;
+    getTreeSizeHelper(sum, root);
+    return sum;
+}
+
+//Public function to search an area and returns a map(point -> type) consisting the points as keys data found as values in the tree.
+template<class type>
+map<point, type> PointQuadTree<type>::searchArea(point &searchCenter, int &radius) {
+    map<point, type> pointFoundToData;
+    searchAreaHelper(searchCenter, radius, pointFoundToData, root);
+    return pointFoundToData;
+}
+
+//Public function that searches for a given point p.
+//If p exists in the tree, return the data stored at that node, else throw exception error.
+template<class type>
+type PointQuadTree<type>::searchPoint(point &p) {
+    return searchPointHelper(root, p);
+}
+
+//Overloaded searchPoint that takes coordinates as integers, then converts to point.
+template<class type>
+type PointQuadTree<type>::searchPoint(int xCoordinate, int yCoordinate) {
+    point p(xCoordinate, yCoordinate);
+    return searchPointHelper(root, p);
 }
